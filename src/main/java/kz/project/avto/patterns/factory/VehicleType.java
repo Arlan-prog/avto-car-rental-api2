@@ -1,4 +1,6 @@
 package kz.project.avto.patterns.factory;
 
-public class VehicleType {
+public enum VehicleType {
+    ECONOMY,
+    LUXURY
 }
