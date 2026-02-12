@@ -38,7 +38,7 @@ public class RentalService {
         carRepository.findById(request.getCarId())
                 .orElseThrow(() -> new ResourceNotFoundException("Car not found: id=" + request.getCarId()));
 
-        // ===== BUILDER PATTERN =====
+        // BUILDER PATTERN
         Rental rental = new Rental.Builder()
                 .customerId(request.getCustomerId())
                 .carId(request.getCarId())

@@ -1,4 +1,6 @@
 package kz.project.avto.service;
+import kz.project.avto.utils.SimpleCache;
+
 import kz.project.avto.utils.AppConfig;
 import kz.project.avto.utils.AppLogger;
 
@@ -20,6 +22,7 @@ public class CarService {
     private final CarRepositoryJdbc carRepository;
     private final AppLogger logger = AppLogger.getInstance();
     private final AppConfig config = AppConfig.getInstance();
+    private final SimpleCache cache = SimpleCache.getInstance();
 
     public CarService(CarRepositoryJdbc carRepository) {
         this.carRepository = carRepository;
@@ -40,7 +43,7 @@ public class CarService {
         );
 
         VehicleBase saved = carRepository.save(car);
-
+        cache.remove("cars");
         return toResponse(saved);
     }
 
@@ -52,11 +55,27 @@ public class CarService {
     }
 
     public List<CarResponse> getAll() {
-        return carRepository.findAll()
+
+        List<CarResponse> cached = (List<CarResponse>) cache.get("cars");
+
+        if (cached != null) {
+            logger.log("Returning cars from CACHE");
+            return cached;
+        }
+
+        logger.log("Fetching cars from DATABASE");
+
+        List<CarResponse> cars = carRepository.findAll()
                 .stream()
                 .map(this::toResponse)
                 .toList();
+
+        cache.put("cars", cars);
+
+        return cars;
     }
+
+
 
     private void validateCreateRequest(CarCreateRequest request) {
         if (request.getType() == null || request.getType().isBlank()) {
@@ -109,6 +128,7 @@ public class CarService {
         );
 
         carRepository.update(id, updated);
+        cache.remove("cars");
 
         // возвращаем обновлённую версию
         VehicleBase after = carRepository.findById(id)
@@ -123,6 +143,8 @@ public class CarService {
                 .orElseThrow(() -> new ResourceNotFoundException("Car not found: id=" + id));
 
         carRepository.deleteById(id);
+        cache.remove("cars");
+
     }
 
 }
