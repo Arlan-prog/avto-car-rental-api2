@@ -14,7 +14,6 @@ import java.util.List;
 
 @Service
 public class RentalService {
-
     private final RentalRepositoryJdbc rentalRepository;
     private final CustomerRepositoryJdbc customerRepository;
     private final CarRepositoryJdbc carRepository;
@@ -28,38 +27,49 @@ public class RentalService {
     }
 
     public RentalResponse create(RentalCreateRequest request) {
-        if (request.getCustomerId() == null) throw new InvalidInputException("customerId is required");
-        if (request.getCarId() == null) throw new InvalidInputException("carId is required");
-        if (request.getDays() <= 0) throw new InvalidInputException("days must be > 0");
+        if (request == null) {
+            throw new InvalidInputException("Rental request is required.");
+        }
+        Long customerId = request.getCustomerId();
+        Long carId = request.getCarId();
+        if (customerId == null || customerId <= 0) {
+            throw new InvalidInputException("customerId must be positive.");
+        }
+        if (carId == null || carId <= 0) {
+            throw new InvalidInputException("carId must be positive.");
+        }
+        if (request.getDays() <= 0) {
+            throw new InvalidInputException("days must be positive.");
+        }
 
-        // проверяем существование customer и car
-        customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: id=" + request.getCustomerId()));
-        carRepository.findById(request.getCarId())
-                .orElseThrow(() -> new ResourceNotFoundException("Car not found: id=" + request.getCarId()));
+        customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: id=" + customerId));
+        carRepository.findById(carId)
+                .orElseThrow(() -> new ResourceNotFoundException("Car not found: id=" + carId));
 
-        // BUILDER PATTERN
         Rental rental = new Rental.Builder()
-                .customerId(request.getCustomerId())
-                .carId(request.getCarId())
+                .customerId(customerId)
+                .carId(carId)
                 .days(request.getDays())
                 .build();
-
         Rental saved = rentalRepository.save(rental);
-
-        return new RentalResponse(saved.getId(), saved.getCustomerId(), saved.getCarId(), saved.getDays());
+        return toResponse(saved);
     }
 
     public List<RentalResponse> getAll() {
-        return rentalRepository.findAll()
-                .stream()
-                .map(r -> new RentalResponse(r.getId(), r.getCustomerId(), r.getCarId(), r.getDays()))
-                .toList();
+        return rentalRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     public RentalResponse getById(Long id) {
-        Rental r = rentalRepository.findById(id)
+        if (id == null || id <= 0) {
+            throw new InvalidInputException("Rental id must be positive.");
+        }
+        Rental rental = rentalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental not found: id=" + id));
-        return new RentalResponse(r.getId(), r.getCustomerId(), r.getCarId(), r.getDays());
+        return toResponse(rental);
+    }
+
+    private RentalResponse toResponse(Rental rental) {
+        return new RentalResponse(rental.getId(), rental.getCustomerId(), rental.getCarId(), rental.getDays());
     }
 }

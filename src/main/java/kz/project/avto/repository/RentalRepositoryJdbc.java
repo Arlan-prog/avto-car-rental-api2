@@ -65,7 +65,7 @@ public class RentalRepositoryJdbc implements CrudRepository<Rental> {
 
     @Override
     public List<Rental> findAll() {
-        String sql = "SELECT * FROM rentals";
+        String sql = "SELECT * FROM rentals ORDER BY id";
         return jdbcTemplate.query(sql, rentalRowMapper);
     }
 

@@ -1,24 +1,23 @@
 package kz.project.avto.utils;
 
-import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class AppLogger {
-
-    private static AppLogger instance;
+public final class AppLogger {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppLogger.class);
 
     private AppLogger() {
     }
 
+    private static final class Holder {
+        private static final AppLogger INSTANCE = new AppLogger();
+    }
+
     public static AppLogger getInstance() {
-        if (instance == null) {
-            instance = new AppLogger();
-        }
-        return instance;
+        return Holder.INSTANCE;
     }
 
     public void log(String message) {
-        System.out.println(
-                "[" + LocalDateTime.now() + "] " + message
-        );
+        LOGGER.info("{}", message);
     }
 }

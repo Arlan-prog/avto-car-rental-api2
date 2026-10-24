@@ -51,7 +51,7 @@ public class CustomerRepositoryJdbc implements CrudRepository<Customer> {
 
     @Override
     public List<Customer> findAll() {
-        return jdbcTemplate.query("SELECT * FROM customers", rowMapper);
+        return jdbcTemplate.query("SELECT * FROM customers ORDER BY id", rowMapper);
     }
 
     @Override
