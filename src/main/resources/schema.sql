@@ -16,8 +16,14 @@ CREATE TABLE IF NOT EXISTS rentals (
     id BIGSERIAL PRIMARY KEY,
     customer_id BIGINT NOT NULL REFERENCES customers(id),
     car_id BIGINT NOT NULL REFERENCES cars(id),
-    days INT NOT NULL CHECK (days > 0)
+    days INT NOT NULL CHECK (days > 0),
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+        CHECK (status IN ('ACTIVE', 'FINISHED'))
 );
 
+ALTER TABLE rentals
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
+
+CREATE UNIQUE INDEX IF NOT EXISTS one_active_rental_per_car
+    ON rentals(car_id) WHERE status = 'ACTIVE';
 CREATE INDEX IF NOT EXISTS rentals_customer_id_idx ON rentals(customer_id);
-CREATE INDEX IF NOT EXISTS rentals_car_id_idx ON rentals(car_id);

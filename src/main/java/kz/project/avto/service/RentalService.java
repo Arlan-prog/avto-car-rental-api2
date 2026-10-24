@@ -9,6 +9,7 @@ import kz.project.avto.repository.CarRepositoryJdbc;
 import kz.project.avto.repository.CustomerRepositoryJdbc;
 import kz.project.avto.repository.RentalRepositoryJdbc;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class RentalService {
         this.carRepository = carRepository;
     }
 
+    @Transactional
     public RentalResponse create(RentalCreateRequest request) {
         if (request == null) {
             throw new InvalidInputException("Rental request is required.");
@@ -51,9 +53,9 @@ public class RentalService {
                 .customerId(customerId)
                 .carId(carId)
                 .days(request.getDays())
+                .status("ACTIVE")
                 .build();
-        Rental saved = rentalRepository.save(rental);
-        return toResponse(saved);
+        return toResponse(rentalRepository.save(rental));
     }
 
     public List<RentalResponse> getAll() {
@@ -69,7 +71,25 @@ public class RentalService {
         return toResponse(rental);
     }
 
+    @Transactional
+    public RentalResponse close(Long id) {
+        Rental rental = rentalRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Rental not found: id=" + id));
+        if (!rentalRepository.closeActiveRental(id)) {
+            throw new InvalidInputException("Rental is already finished.");
+        }
+        return toResponse(new Rental.Builder()
+                .id(rental.getId())
+                .customerId(rental.getCustomerId())
+                .carId(rental.getCarId())
+                .days(rental.getDays())
+                .status("FINISHED")
+                .build());
+    }
+
     private RentalResponse toResponse(Rental rental) {
-        return new RentalResponse(rental.getId(), rental.getCustomerId(), rental.getCarId(), rental.getDays());
+        return new RentalResponse(
+                rental.getId(), rental.getCustomerId(), rental.getCarId(), rental.getDays(), rental.getStatus()
+        );
     }
 }

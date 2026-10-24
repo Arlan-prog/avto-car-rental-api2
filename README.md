@@ -19,7 +19,7 @@ export DB_PASSWORD=your_local_password
 mvn spring-boot:run
 ```
 
-The schema is initialized from `src/main/resources/schema.sql`. The script is idempotent and does not drop tables. Do not commit real credentials.
+The schema is initialized from `src/main/resources/schema.sql`. It is safe to run on startup and does not drop tables. Keep real credentials out of Git.
 
 ## Endpoints
 
@@ -33,27 +33,9 @@ The schema is initialized from `src/main/resources/schema.sql`. The script is id
 | POST | `/api/customers` | Create a customer |
 | GET | `/api/customers` | List customers |
 | GET | `/api/customers/{id}` | Read a customer |
-| POST | `/api/rentals` | Create a rental |
+| POST | `/api/rentals` | Start a rental |
 | GET | `/api/rentals` | List rentals |
 | GET | `/api/rentals/{id}` | Read a rental |
+| PATCH | `/api/rentals/{id}/close` | Finish an active rental |
 
-Example car request:
-
-```json
-{
-  "type": "ECONOMY",
-  "brand": "Toyota",
-  "model": "Corolla",
-  "pricePerDay": 15000
-}
-```
-
-Example rental request:
-
-```json
-{
-  "customerId": 1,
-  "carId": 1,
-  "days": 3
-}
-```
+Only one active rental per car is allowed. A finished rental releases the car for a later booking.
